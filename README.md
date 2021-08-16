@@ -1,70 +1,67 @@
-# Getting Started with Create React App
+Steps tp deploy React application on GKE
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Available Scripts
+Create docker file
 
-In the project directory, you can run:
+Build image from dockerfile ( command "docker build -t react-docker-gke .")
 
-### `npm start`
+Test docker image locally (command "docker run -d -it  -p 80:80/tcp --name react-docker-gke react-docker-gke:
+latest")
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+use http://localhost:80 in browser or postman and vrify if it webpage is loaded
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+Create a new project in CGP and enable billing. (https://console.cloud.google.com/home/dashboard)
 
-### `npm test`
+Enable Container registy API in your GCP project.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Login to gcloud cell . command "gcloud auth login"
 
-### `npm run build`
+Set the correct project. in cmd navigate to root directory of your project and set the GCP project
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+command "gcloud config set project react-docker-gke" -->gcloud config set project
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Push the docker image to container Registry
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+To push the Docker image to the Google Container Registry, we have to tag it according to the following pattern reginalEcrHostname/projectId/dockerImageName:tag
 
-### `npm run eject`
+command "docker tag react-docker-gke asia.gcr.io/react-docker-gke/react-docker-gke"
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+verify if the new image with tagged name is created
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+command to see all the images "docker images"
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+Now Push the docker image to conatiner registry
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+command "docker push asia.gcr.io/react-docker-gke/react-docker-gke"
 
-## Learn More
+Create Kubernetes cluster in CGP
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+To create the cluster first you need to enable Kubernetes engine Api from GCP dashboard.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Then create a cluster
 
-### Code Splitting
+command "gcloud container clusters create react-docker-gke-cluster --num-nodes=3 --region=asia-southeast1-a" cluster name nodes and region can be chnaged as per need
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+configure the cluster for you project
 
-### Analyzing the Bundle Size
+comamnd "gcloud config set container/cluster react-docker-gke-cluster"
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Deploy your image to created cluster
 
-### Making a Progressive Web App
+command "kubectl run react-docker-gke --image=asia.gcr.io/react-docker-gke/react-docker-gke --port 8080"
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+check pods
 
-### Advanced Configuration
+command "kubectl get pods"
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+Expose your pod
 
-### Deployment
+command "kubectl expose pod react-docker-gke --type=LoadBalancer --port 80 --target-port 8080"
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Check services
 
-### `npm run build` fails to minify
+command "kubectl get service"
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Wait for external API to show up for your service
+
+Use external ip with your enpoint to test application in Browser or postman.
